@@ -1,21 +1,26 @@
 package main
 
 import (
+	"crypto/md5"
 	"fmt"
-	"github.com/romanoff/fsmonitor"
-	"gopkg.in/yaml.v1"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path"
-	"strings"
 	"time"
+
+	"github.com/romanoff/fsmonitor"
+	"gopkg.in/yaml.v1"
 )
 
 const (
 	config = ".gg.yaml"
+)
+
+var (
+	fileSummarys = map[string]string{}
 )
 
 /*
@@ -41,11 +46,36 @@ type Config struct {
 	Watch []struct {
 		Pattern string
 		Command string
+		Delay   int
+	}
+}
+
+func md5String(filename string) string {
+	bs, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+	a := md5.Sum(bs)
+	return string(a[:])
+}
+
+func changed(name string) (b bool) {
+	oldSummary := fileSummarys[name]
+	newSummary := md5String(name)
+	if oldSummary == "" {
+		fileSummarys[name] = newSummary
+		return true
+	}
+	if oldSummary == newSummary {
+		return false
+	} else {
+		fileSummarys[name] = newSummary
+		return true
 	}
 }
 
 func main() {
-	commandTriggerDelay := 250 * time.Millisecond
 	workingDir, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Unable to get current directory. Wtf?")
@@ -99,21 +129,26 @@ func main() {
 					}
 
 					if match {
-						if _, ok := commandTriggerDelays[ev.Name]; !ok {
-							commandTriggerDelays[ev.Name] = time.Now()
-						}
-
-						if commandTriggerDelays[ev.Name].Add(commandTriggerDelay).Before(time.Now()) {
-							log.Printf("Run %v ...\n", strings.Replace(ev.Name, workingDir+"/", "", 1))
-							cmd := exec.Command("sh", "-c", w.Command)
-							cmd.Stdin = os.Stdin
-							cmd.Stdout = os.Stdout
-							cmd.Stderr = os.Stderr
-							if err := cmd.Run(); err != nil {
-								log.Printf("[error] [%v] %v", basename, err)
+						if changed(ev.Name) {
+							log.Printf("%s changed, match: %s", ev.Name, w.Pattern)
+							if _, ok := commandTriggerDelays[w.Pattern]; !ok {
+								commandTriggerDelays[w.Pattern] = time.Now()
 							}
-							fmt.Printf("\n")
-							commandTriggerDelays[ev.Name] = time.Now()
+
+							if commandTriggerDelays[w.Pattern].Add(time.Duration(w.Delay) * time.Millisecond).Before(time.Now()) {
+								log.Printf("Run %v ...\n", w.Command)
+								cmd := exec.Command("sh", "-c", w.Command)
+								cmd.Stdin = os.Stdin
+								cmd.Stdout = os.Stdout
+								cmd.Stderr = os.Stderr
+								commandTriggerDelays[w.Pattern] = time.Now()
+								go func() {
+									if err := cmd.Run(); err != nil {
+										log.Printf("[error] [%v] %v", basename, err)
+									}
+								}()
+								log.Println("restart complete")
+							}
 						}
 					}
 				}
