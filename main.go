@@ -47,6 +47,7 @@ type Config struct {
 		Pattern string
 		Command string
 		Delay   int
+		Start   int
 	}
 }
 
@@ -115,6 +116,22 @@ func main() {
 		}
 	}()
 
+	for _, w := range c.Watch {
+		if w.Start == 0 {
+			continue
+		}
+		log.Printf("Run %v ...\n", w.Command)
+		cmd := exec.Command("sh", "-c", w.Command)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		go func() {
+			if err := cmd.Run(); err != nil {
+				log.Printf("[error] [%v] %v", w.Pattern, err)
+			}
+		}()
+	}
+
 	for {
 		select {
 		case ev := <-watcher.Event:
@@ -131,11 +148,8 @@ func main() {
 					if match {
 						if changed(ev.Name) {
 							log.Printf("%s changed, match: %s", ev.Name, w.Pattern)
-							if _, ok := commandTriggerDelays[w.Pattern]; !ok {
-								commandTriggerDelays[w.Pattern] = time.Now()
-							}
-
-							if commandTriggerDelays[w.Pattern].Add(time.Duration(w.Delay) * time.Millisecond).Before(time.Now()) {
+							last, ok := commandTriggerDelays[w.Pattern]
+							if !ok || last.Add(time.Duration(w.Delay)*time.Millisecond).Before(time.Now()) {
 								log.Printf("Run %v ...\n", w.Command)
 								cmd := exec.Command("sh", "-c", w.Command)
 								cmd.Stdin = os.Stdin
