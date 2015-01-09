@@ -26,6 +26,11 @@ watch:
   command: "./restart.sh"
   delay: 3000
   start: 0
+
+skip:
+  folders:
+    - ".git"
+    - ".svn"
 ```
 
 Run ``reloader`` afterwards.
