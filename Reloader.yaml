@@ -1,0 +1,12 @@
+
+watch:
+
+- pattern: "*.rb"
+  command: "./dev.sh"
+  delay: 3000
+  start: 1
+
+- pattern: "*.yml"
+  command: "./dev.sh"
+  delay: 3000
+  start: 0

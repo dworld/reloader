@@ -17,31 +17,12 @@ import (
 )
 
 const (
-	config = ".gg.yaml"
+	config = "Reloader.yaml"
 )
 
 var (
 	fileSummarys = map[string]string{}
 )
-
-/*
-Example gg.yaml
-
-```yaml
-watch:
-
-- pattern: "*.txt"
-  command: "echo hello world, txt"
-  bindkey: t @todo triggers this command when running gg
-
-- pattern: "*.go"
-  command: "echo hello world, go"
-  bindkey: g @todo triggers this command when running gg
-
-- pattern: "(.*)_test.go" @todo use pattern matches in command
-  command: "go run $1_test.go"
-```
-*/
 
 type Config struct {
 	Watch []struct {
@@ -112,7 +93,6 @@ func main() {
 	}
 
 	err = watcher.Watch(workingDir)
-
 	commandTriggerDelays := make(map[string]time.Time)
 
 	ch := make(chan os.Signal, 1)
@@ -145,8 +125,6 @@ func main() {
 		case ev := <-watcher.Event:
 			for _, w := range c.Watch {
 				if ev.IsModify() {
-
-					// http://golang.org/pkg/path/#Match
 					basename := path.Base(ev.Name)
 					match, err := path.Match(w.Pattern, basename)
 					if err != nil {
@@ -179,5 +157,4 @@ func main() {
 			log.Printf("[error] %v", err)
 		}
 	}
-
 }

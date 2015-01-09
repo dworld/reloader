@@ -1,27 +1,31 @@
-GG
+Reloader
 ==
 
-Watch file changes and exec commands (YAML + GoLang)
+Reload program when file changed
 
 
 ### Installation
 ```
-go get github.com/mattes/gg
+go get github.com/dworld/reloader
 ```
 
 
 ### Usage
 
-Create ``gg.yaml`` file in your working directory.
+Create ``Reloader.yaml`` file in your working directory.
 
 ```yaml
 watch:
 
-- pattern: "*.txt"
-  command: "echo hello world, txt"
+- pattern: "*.rb"
+  command: "./restart.sh"
+  delay: 3000
+  start: 1
 
-- pattern: "*.go"
-  command: "echo hello world, go"
+- pattern: "*.yml"
+  command: "./restart.sh"
+  delay: 3000
+  start: 0
 ```
 
-Run ``gg`` afterwards.
+Run ``reloader`` afterwards.
