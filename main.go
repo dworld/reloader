@@ -91,7 +91,7 @@ func setOpenFileLimit(limit uint64) {
 }
 
 func main() {
-	setOpenFileLimit(10000)
+	setOpenFileLimit(50000)
 	workingDir, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Unable to get current directory. Wtf?")
@@ -113,7 +113,7 @@ func main() {
 		panic(err)
 	}
 
-	watcher, err := fsmonitor.NewWatcherWithSkipFolders([]string{".git"})
+	watcher, err := fsmonitor.NewWatcherWithSkipFolders([]string{".git", ".svn"})
 	if err != nil {
 		panic(err)
 	}
