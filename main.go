@@ -31,6 +31,9 @@ type Config struct {
 		Delay   int
 		Start   int
 	}
+	Skip struct {
+		Folders []string
+	}
 }
 
 func md5String(filename string) string {
@@ -65,7 +68,17 @@ func printOpenFileLimit() {
 }
 
 func main() {
+	f, err := ioutil.ReadFile(config)
+	if err != nil {
+		panic(err)
+	}
+	c := Config{}
+	if err := yaml.Unmarshal(f, &c); err != nil {
+		panic(err)
+	}
 	printOpenFileLimit()
+	log.Printf("skip folders, %v", c.Skip.Folders)
+
 	workingDir, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Unable to get current directory. Wtf?")
@@ -77,17 +90,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	f, err := ioutil.ReadFile(config)
-	if err != nil {
-		panic(err)
-	}
-
-	c := Config{}
-	if err := yaml.Unmarshal(f, &c); err != nil {
-		panic(err)
-	}
-
-	watcher, err := fsmonitor.NewWatcherWithSkipFolders([]string{".git", ".svn"})
+	watcher, err := fsmonitor.NewWatcherWithSkipFolders(c.Skip.Folders)
 	if err != nil {
 		panic(err)
 	}

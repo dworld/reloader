@@ -10,3 +10,8 @@ watch:
   command: "./dev.sh"
   delay: 3000
   start: 0
+
+skip:
+  folders:
+    - ".git"
+    - ".svn"
