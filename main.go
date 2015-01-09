@@ -77,21 +77,14 @@ func changed(name string) (b bool) {
 	}
 }
 
-func setOpenFileLimit(limit uint64) {
+func printOpenFileLimit() {
 	rlimit := &syscall.Rlimit{}
 	syscall.Getrlimit(syscall.RLIMIT_NOFILE, rlimit)
-	log.Printf("old open file limit, %v", rlimit)
-	rlimit.Cur = limit
-	rlimit.Max = limit
-	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, rlimit)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Printf("new open file limit, %v", rlimit)
+	log.Printf("open file limit, %v", rlimit)
 }
 
 func main() {
-	setOpenFileLimit(50000)
+	printOpenFileLimit()
 	workingDir, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Unable to get current directory. Wtf?")
