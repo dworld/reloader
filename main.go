@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path"
+	"syscall"
 	"time"
 
 	"github.com/romanoff/fsmonitor"
@@ -76,7 +77,21 @@ func changed(name string) (b bool) {
 	}
 }
 
+func setOpenFileLimit(limit uint64) {
+	rlimit := &syscall.Rlimit{}
+	syscall.Getrlimit(syscall.RLIMIT_NOFILE, rlimit)
+	log.Printf("old open file limit, %v", rlimit)
+	rlimit.Cur = limit
+	rlimit.Max = limit
+	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, rlimit)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Printf("new open file limit, %v", rlimit)
+}
+
 func main() {
+	setOpenFileLimit(10000)
 	workingDir, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Unable to get current directory. Wtf?")
