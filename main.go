@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path"
+	"sync"
 	"syscall"
 	"time"
 
@@ -22,6 +23,7 @@ const (
 
 var (
 	fileSummarys = map[string]string{}
+	runMutex     sync.Mutex
 )
 
 type Config struct {
@@ -117,6 +119,8 @@ func main() {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		go func() {
+			runMutex.Lock()
+			defer runMutex.Unlock()
 			if err := cmd.Run(); err != nil {
 				log.Printf("[error] [%v] %v", w.Pattern, err)
 			}
@@ -146,6 +150,8 @@ func main() {
 								cmd.Stderr = os.Stderr
 								commandTriggerDelays[w.Pattern] = time.Now()
 								go func() {
+									runMutex.Lock()
+									defer runMutex.Unlock()
 									if err := cmd.Run(); err != nil {
 										log.Printf("[error] [%v] %v", basename, err)
 									}
