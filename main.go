@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ActiveState/tail"
 	"github.com/romanoff/fsmonitor"
 	"gopkg.in/yaml.v1"
 )
@@ -30,6 +31,7 @@ type Config struct {
 	Watch []struct {
 		Pattern string
 		Command string
+		Log     string
 		Delay   int
 		Start   int
 	}
@@ -125,6 +127,20 @@ func main() {
 				log.Printf("[error] [%v] %v", w.Pattern, err)
 			}
 		}()
+		log.Printf("log: %s\n", w.Log)
+		if w.Log != "" {
+			go func() {
+				t, err := tail.TailFile("test.log", tail.Config{Follow: true})
+				if err != nil {
+					panic(err)
+				}
+				log.Printf("tail -f %s\n", "test.log")
+				for line := range t.Lines {
+					fmt.Println("get lines")
+					fmt.Println(line.Text)
+				}
+			}()
+		}
 	}
 
 	for {
