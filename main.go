@@ -129,14 +129,14 @@ func main() {
 		}()
 		log.Printf("log: %s\n", w.Log)
 		if w.Log != "" {
+			logFile := w.Log
 			go func() {
-				t, err := tail.TailFile("test.log", tail.Config{Follow: true})
+				t, err := tail.TailFile(logFile, tail.Config{Follow: true})
 				if err != nil {
 					panic(err)
 				}
-				log.Printf("tail -f %s\n", "test.log")
+				log.Printf("tail -f %s\n", logFile)
 				for line := range t.Lines {
-					fmt.Println("get lines")
 					fmt.Println(line.Text)
 				}
 			}()
