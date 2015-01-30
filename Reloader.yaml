@@ -3,6 +3,7 @@ watch:
 
 - pattern: "*.rb"
   command: "./dev.sh"
+  log: "log/log.log"
   delay: 3000
   start: 1
 
